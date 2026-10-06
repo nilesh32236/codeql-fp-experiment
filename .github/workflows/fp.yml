@@ -4,12 +4,20 @@ on:
     inputs:
       sarif_b64:
         required: true
+      category:
+        required: true
+      wait:
+        required: false
+        default: 'true'
 jobs:
-  with_checkout:
+  upload_with_checkout:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
+    env:
+      ACTIONS_STEP_DEBUG: true
+      SARIF_DUMP_DIR: ${{ github.workspace }}/dump
     steps:
       - uses: actions/checkout@v4
       - name: write sarif
@@ -19,13 +27,27 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: report.sarif
-          category: fp-exp
-  without_checkout:
+          category: ${{ inputs.category }}
+          wait-for-processing: ${{ inputs.wait }}
+      - name: show post-processed sarif
+        run: |
+          ls -R dump || true
+          find dump -name '*.sarif' -exec sh -c 'echo "=== {} ==="; cat "{}"' \;
+
+  upload_without_checkout:
+    needs: upload_with_checkout
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
+    env:
+      ACTIONS_STEP_DEBUG: true
+      SARIF_DUMP_DIR: ${{ github.workspace }}/dump
     steps:
+      - name: prove no source tree is present
+        run: |
+          echo "cwd contents:"; ls -A
+          echo "src exists?"; test -e src && echo YES || echo "NO - no source tree"
       - name: write sarif
         env:
           B64: ${{ inputs.sarif_b64 }}
@@ -33,4 +55,9 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: report.sarif
-          category: fp-exp
+          category: ${{ inputs.category }}
+          wait-for-processing: ${{ inputs.wait }}
+      - name: show post-processed sarif
+        run: |
+          ls -R dump || true
+          find dump -name '*.sarif' -exec sh -c 'echo "=== {} ==="; cat "{}"' \;
