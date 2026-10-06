@@ -1,0 +1,36 @@
+name: fp
+on:
+  workflow_dispatch:
+    inputs:
+      sarif_b64:
+        required: true
+jobs:
+  with_checkout:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: write sarif
+        env:
+          B64: ${{ inputs.sarif_b64 }}
+        run: echo "$B64" | base64 -d > report.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+          category: fp-exp
+  without_checkout:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: write sarif
+        env:
+          B64: ${{ inputs.sarif_b64 }}
+        run: echo "$B64" | base64 -d > report.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+          category: fp-exp
