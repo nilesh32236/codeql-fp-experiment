@@ -30,9 +30,9 @@ jobs:
           category: ${{ inputs.category }}
           wait-for-processing: ${{ inputs.wait }}
       - name: show post-processed sarif
+        if: always()
         run: |
-          ls -R dump || true
-          find dump -name '*.sarif' -exec sh -c 'echo "=== {} ==="; cat "{}"' \;
+          ls -R dump 2>/dev/null || echo "no dump dir on disk at this step (dump is produced in the post step)"
 
   upload_without_checkout:
     needs: upload_with_checkout
@@ -58,6 +58,6 @@ jobs:
           category: ${{ inputs.category }}
           wait-for-processing: ${{ inputs.wait }}
       - name: show post-processed sarif
+        if: always()
         run: |
-          ls -R dump || true
-          find dump -name '*.sarif' -exec sh -c 'echo "=== {} ==="; cat "{}"' \;
+          ls -R dump 2>/dev/null || echo "no dump dir on disk at this step (dump is produced in the post step)"
